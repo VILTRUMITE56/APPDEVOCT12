@@ -1,29 +1,16 @@
 <?php
-/**
- * Display Query Results in HTML Table
- * 
- * This file demonstrates rendering SQL query results in a styled HTML table
- * using PDO fetchAll() with proper escaping for XSS prevention.
- * 
- * @package GroceryItemsPDO
- * @author Student
- * @version 1.0
- */
-
-// Include database configuration
 require_once 'dbconfig.php';
 
-// Helper function to escape HTML output (prevent XSS)
+// Escape HTML output (XSS prevention) - use for every value echoed to the page
 function h($string) {
     return htmlspecialchars((string)$string, ENT_QUOTES, 'UTF-8');
 }
 
-// Helper function to format price
 function formatPrice($price) {
     return '$' . number_format((float)$price, 2);
 }
 
-// Helper function to format stock status
+// Low stock threshold (below 50 units) drives the badge colour
 function getStockStatus($quantity) {
     if ($quantity == 0) return '<span class="badge out-of-stock">Out of Stock</span>';
     if ($quantity < 50) return '<span class="badge low-stock">Low Stock</span>';
@@ -31,10 +18,8 @@ function getStockStatus($quantity) {
 }
 
 try {
-    // Get PDO instance
     $pdo = getPDO();
     
-    // Get filter parameters from URL (for demonstration)
     $categoryFilter = isset($_GET['category']) ? $_GET['category'] : '';
     $minPrice = isset($_GET['min_price']) ? (float)$_GET['min_price'] : 0;
     $maxPrice = isset($_GET['max_price']) ? (float)$_GET['max_price'] : 999999;
@@ -45,7 +30,7 @@ try {
     $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
     $offset = ($page - 1) * $limit;
     
-    // Build dynamic WHERE clause
+    // Filters build the WHERE clause; values never get concatenated, only placeholders
     $whereConditions = [];
     $params = [];
     
@@ -76,20 +61,20 @@ try {
         $whereClause = 'WHERE ' . implode(' AND ', $whereConditions);
     }
     
-    // Validate sort column to prevent SQL injection
+    // Sort column is user input, so validate it against a whitelist before it reaches the SQL
     $allowedSortColumns = ['item_id', 'item_name', 'brand_name', 'category', 'price_aud', 'stock_quantity', 'created_at'];
     if (!in_array($sortBy, $allowedSortColumns)) {
         $sortBy = 'item_id';
     }
     
-    // Count total records for pagination
+    // Count first so the UI can build pagination links
     $countSql = "SELECT COUNT(*) FROM grocery_items $whereClause";
     $countStmt = $pdo->prepare($countSql);
     $countStmt->execute($params);
     $totalRecords = $countStmt->fetchColumn();
     $totalPages = ceil($totalRecords / $limit);
     
-    // Main query with pagination
+    // Main query
     $sql = "SELECT item_id, item_name, brand_name, category, price_aud, stock_quantity, created_at
             FROM grocery_items 
             $whereClause
@@ -98,14 +83,13 @@ try {
     
     $stmt = $pdo->prepare($sql);
     
-    // Add limit and offset to params
+    // LIMIT/OFFSET are bound last, so $params must keep the same order as the placeholders
     $params[] = $limit;
     $params[] = $offset;
     
     $stmt->execute($params);
     $results = $stmt->fetchAll();
     
-    // Get unique categories for filter dropdown
     $catStmt = $pdo->prepare("SELECT DISTINCT category FROM grocery_items ORDER BY category");
     $catStmt->execute();
     $categories = $catStmt->fetchAll(PDO::FETCH_COLUMN);
@@ -131,7 +115,6 @@ try {
         h1 { color: #2c3e50; border-bottom: 3px solid #27ae60; padding-bottom: 10px; }
         h2 { color: #34495e; }
         
-        /* Filter Form */
         .filter-form { background: #ecf0f1; padding: 20px; border-radius: 6px; margin-bottom: 20px; }
         .filter-row { display: flex; gap: 15px; flex-wrap: wrap; align-items: end; margin-bottom: 15px; }
         .filter-group { display: flex; flex-direction: column; gap: 5px; }
@@ -145,7 +128,6 @@ try {
         .btn-secondary { background: #95a5a6; color: white; }
         .btn-secondary:hover { background: #7f8c8d; }
         
-        /* Table Styles */
         .table-wrapper { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ecf0f1; }
@@ -155,39 +137,34 @@ try {
         tr:hover { background: #f8f9fa; }
         tr:nth-child(even) { background: #fafafa; }
         
-        /* Column alignment */
         td.id { text-align: center; font-family: monospace; }
         td.price { text-align: right; font-family: monospace; font-weight: 600; color: #27ae60; }
         td.stock { text-align: center; }
         td.category { text-transform: capitalize; }
         
-        /* Badges */
         .badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
         .badge.in-stock { background: #d5f5e3; color: #1e8a49; }
         .badge.low-stock { background: #fef9e7; color: #b7950b; }
         .badge.out-of-stock { background: #fadbd8; color: #c0392b; }
         
-        /* Pagination */
         .pagination { display: flex; justify-content: center; gap: 5px; margin-top: 20px; flex-wrap: wrap; }
         .pagination a, .pagination span { padding: 8px 12px; border: 1px solid #bdc3c7; border-radius: 4px; text-decoration: none; color: #2c3e50; }
         .pagination a:hover { background: #27ae60; color: white; border-color: #27ae60; }
         .pagination .current { background: #27ae60; color: white; border-color: #27ae60; }
         .pagination .disabled { color: #bdc3c7; pointer-events: none; }
         
-        /* Stats */
         .stats { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
         .stat-card { background: #27ae60; color: white; padding: 15px 20px; border-radius: 6px; min-width: 150px; }
         .stat-card .label { font-size: 12px; opacity: 0.9; }
         .stat-card .value { font-size: 24px; font-weight: 700; }
         
-        /* Error */
         .error { background: #fadbd8; color: #c0392b; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
         
-        /* Footer */
         .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ecf0f1; color: #7f8c8d; font-size: 14px; }
     </style>
 </head>
 <body>
+    <?php require_once 'navbar.php'; ?>
     <div class="container">
         <h1>🛒 Australian Grocery Items Database</h1>
         <p style="color: #7f8c8d;">PDO Methods Activity - Display Query Results in HTML Table</p>
@@ -198,7 +175,6 @@ try {
             </div>
         <?php endif; ?>
         
-        <!-- Statistics -->
         <div class="stats">
             <div class="stat-card">
                 <div class="label">Total Records</div>
@@ -218,7 +194,6 @@ try {
             </div>
         </div>
         
-        <!-- Filter Form -->
         <form method="GET" class="filter-form">
             <div class="filter-row">
                 <div class="filter-group">
@@ -259,16 +234,15 @@ try {
                 </div>
             </div>
             
-            <!-- Hidden fields to preserve sort/order -->
             <input type="hidden" name="sort" value="<?= h($sortBy) ?>">
             <input type="hidden" name="order" value="<?= h(strtolower($sortOrder)) ?>">
         </form>
         
-        <!-- Data Table -->
         <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
+                        <?php /* Sorting links: clicking toggles ASC/DESC; array_filter drops sort/order/page so active filters and search survive */ ?>
                         <th class="id">
                             <a href="?sort=item_id&order=<?= $sortBy === 'item_id' && $sortOrder === 'ASC' ? 'desc' : 'asc' ?>&<?= http_build_query(array_filter($_GET, function($k) { return !in_array($k, ['sort', 'order', 'page']); }, ARRAY_FILTER_USE_KEY)) ?>">
                                 ID <?= $sortBy === 'item_id' ? ($sortOrder === 'ASC' ? '↑' : '↓') : '' ?>
@@ -328,7 +302,6 @@ try {
             </table>
         </div>
         
-        <!-- Pagination -->
         <?php if ($totalPages > 1): ?>
             <div class="pagination">
                 <?php if ($page > 1): ?>
@@ -340,6 +313,7 @@ try {
                 <?php endif; ?>
                 
                 <?php
+                // Sliding window of at most 5 page numbers, clamped to the valid range
                 $startPage = max(1, $page - 2);
                 $endPage = min($totalPages, $page + 2);
                 
@@ -362,7 +336,6 @@ try {
             </div>
         <?php endif; ?>
         
-        <!-- Footer with code explanation -->
         <div class="footer">
             <h3>📝 Code Explanation</h3>
             <p><strong>Key PDO Concepts Demonstrated:</strong></p>

@@ -1,28 +1,15 @@
 <?php
-/**
- * Update Record Demonstration
- * 
- * This file demonstrates updating existing records in the database
- * using PDO prepared statements for security.
- * 
- * @package GroceryItemsPDO
- * @author Student
- * @version 1.0
- */
 
-// Include database configuration
 require_once 'dbconfig.php';
+require_once 'navbar.php';
 
 try {
-    // Get PDO instance
     $pdo = getPDO();
     
     echo "<h2>PDO Update Record Demonstration</h2>";
     
-    // Example 1: UPDATE single record by ID
     echo "<h3>Example 1: UPDATE Single Record by ID</h3>";
     
-    // First, view a record to update
     $viewSql = "SELECT item_id, item_name, brand_name, price_aud, stock_quantity 
                 FROM grocery_items WHERE item_id = 1";
     $viewStmt = $pdo->prepare($viewSql);
@@ -34,7 +21,6 @@ try {
     print_r($originalRecord);
     echo "</pre>";
     
-    // UPDATE with prepared statement using named placeholders
     $updateSql = "UPDATE grocery_items 
                   SET price_aud = :new_price, 
                       stock_quantity = :new_stock,
@@ -43,7 +29,6 @@ try {
     
     $updateStmt = $pdo->prepare($updateSql);
     
-    // New values
     $newData = [
         ':id'          => 1,
         ':new_name'    => 'Tim Tam Original (Updated)',
@@ -51,7 +36,6 @@ try {
         ':new_stock'   => 200
     ];
     
-    // Execute update
     $result = $updateStmt->execute($newData);
     $affectedRows = $updateStmt->rowCount();
     
@@ -65,7 +49,6 @@ try {
         echo "</div>";
     }
     
-    // Verify the update
     $verifyStmt = $pdo->prepare("SELECT item_id, item_name, brand_name, price_aud, stock_quantity FROM grocery_items WHERE item_id = 1");
     $verifyStmt->execute();
     $updatedRecord = $verifyStmt->fetch();
@@ -75,14 +58,11 @@ try {
     print_r($updatedRecord);
     echo "</pre>";
     
-    // Example 2: UPDATE multiple records with condition
     echo "<h3>Example 2: UPDATE Multiple Records with Condition</h3>";
     
-    // Increase price by 10% for all items in 'Biscuits' category
     $category = 'Biscuits';
-    $percentageIncrease = 1.10; // 10% increase
+    $percentageIncrease = 1.10;
     
-    // First, see how many records will be affected
     $countSql = "SELECT COUNT(*) as count FROM grocery_items WHERE category = ?";
     $countStmt = $pdo->prepare($countSql);
     $countStmt->execute([$category]);
@@ -91,7 +71,7 @@ try {
     
     echo "<p>Records in '$category' category: $biscuitCount</p>";
     
-    // Perform bulk update with transaction
+    // Demo transaction: rolled back immediately so the demo never mutates live data
     $pdo->beginTransaction();
     
     try {
@@ -104,7 +84,6 @@ try {
         $bulkUpdateStmt->execute([$percentageIncrease, $category]);
         $bulkAffected = $bulkUpdateStmt->rowCount();
         
-        // For demo, rollback to preserve original prices
         $pdo->rollBack();
         
         echo "<div style='color: blue;'>";
@@ -120,21 +99,19 @@ try {
         echo "</div>";
     }
     
-    // Example 3: UPDATE with CASE statement (conditional update)
     echo "<h3>Example 3: UPDATE with CASE Statement (Conditional Logic)</h3>";
     
     echo "<p>Apply different price adjustments based on category:</p>";
     echo "<pre>";
     echo "UPDATE grocery_items 
 SET price_aud = CASE 
-    WHEN category = 'Biscuits' THEN ROUND(price_aud * 1.05, 2)  -- 5% increase
-    WHEN category = 'Chocolate' THEN ROUND(price_aud * 1.08, 2) -- 8% increase
-    WHEN category = 'Beverages' THEN ROUND(price_aud * 0.95, 2) -- 5% discount
-    ELSE price_aud  -- no change
+    WHEN category = 'Biscuits' THEN ROUND(price_aud * 1.05, 2)
+    WHEN category = 'Chocolate' THEN ROUND(price_aud * 1.08, 2)
+    WHEN category = 'Beverages' THEN ROUND(price_aud * 0.95, 2)
+    ELSE price_aud
 END";
     echo "</pre>";
     
-    // Example 4: UPDATE with JOIN (using subquery)
     echo "<h3>Example 4: UPDATE Using Subquery</h3>";
     
     echo "<p>Update stock based on category average price:</p>";
@@ -142,19 +119,18 @@ END";
     echo "UPDATE grocery_items g
 SET stock_quantity = CASE 
     WHEN g.price_aud > (SELECT AVG(price_aud) FROM grocery_items WHERE category = g.category)
-    THEN stock_quantity + 20  -- above average price gets more stock
-    ELSE stock_quantity + 5   -- below average gets less
+    THEN stock_quantity + 20
+    ELSE stock_quantity + 5
 END";
     echo "</pre>";
     
-    // Example 5: Safe UPDATE pattern with verification
     echo "<h3>Example 5: Safe UPDATE Pattern</h3>";
     
     function safeUpdate($pdo, $itemId, $newData) {
-        // Allowed fields to update (whitelist for security)
+        // Column names cannot be bound as placeholders, so whitelist them here
+        // or arbitrary keys would be spliced straight into the SQL
         $allowedFields = ['item_name', 'brand_name', 'category', 'price_aud', 'stock_quantity'];
         
-        // Filter input to only allowed fields
         $updateFields = [];
         $params = ['id' => $itemId];
         
@@ -169,7 +145,6 @@ END";
             return ['success' => false, 'message' => 'No valid fields to update'];
         }
         
-        // Verify record exists
         $verifySql = "SELECT item_id, item_name FROM grocery_items WHERE item_id = :id";
         $verifyStmt = $pdo->prepare($verifySql);
         $verifyStmt->execute(['id' => $itemId]);
@@ -179,7 +154,6 @@ END";
             return ['success' => false, 'message' => "Record ID $itemId not found"];
         }
         
-        // Build dynamic UPDATE query
         $sql = "UPDATE grocery_items SET " . implode(', ', $updateFields) . " WHERE item_id = :id";
         $stmt = $pdo->prepare($sql);
         $result = $stmt->execute($params);
@@ -196,18 +170,16 @@ END";
         return ['success' => false, 'message' => 'Update failed'];
     }
     
-    // Demonstrate safe update
     $safeResult = safeUpdate($pdo, 2, [
         'price_aud' => 4.20,
         'stock_quantity' => 130,
-        'invalid_field' => 'this will be ignored'  // Will be filtered out
+        'invalid_field' => 'this will be ignored'
     ]);
     
     echo "<pre>";
     print_r($safeResult);
     echo "</pre>";
     
-    // Example 6: UPDATE with RETURNING (MySQL 8.0.20+)
     echo "<h3>Example 6: UPDATE with RETURNING Clause (MySQL 8.0.20+)</h3>";
     
     echo "<p>MySQL 8.0.20+ supports RETURNING to get updated values:</p>";
@@ -218,15 +190,12 @@ WHERE category = 'Chocolate'
 RETURNING item_id, item_name, price_aud AS new_price;";
     echo "</pre>";
     
-    // Note: MySQL/MariaDB version may not support RETURNING
-    // Check version:
     $versionSql = "SELECT VERSION()";
     $versionStmt = $pdo->prepare($versionSql);
     $versionStmt->execute();
     $version = $versionStmt->fetchColumn();
     echo "<p>MySQL Version: $version</p>";
     
-    // Example 7: Batch update with array of updates
     echo "<h3>Example 7: Batch Update Multiple Records</h3>";
     
     $batchUpdates = [
@@ -235,6 +204,7 @@ RETURNING item_id, item_name, price_aud AS new_price;";
         ['id' => 5, 'price_aud' => 3.20, 'stock_quantity' => 190]
     ];
     
+    // Wrapped in a transaction so the demo shows what rowCount() reports, then discards it
     $pdo->beginTransaction();
     
     try {
@@ -248,7 +218,7 @@ RETURNING item_id, item_name, price_aud AS new_price;";
             }
         }
         
-        $pdo->rollBack(); // Rollback for demo
+        $pdo->rollBack();
         
         echo "<div style='color: blue;'>";
         echo "<p><strong>Batch Update Demo (Rolled Back)</strong></p>";
@@ -262,7 +232,6 @@ RETURNING item_id, item_name, price_aud AS new_price;";
         echo "</div>";
     }
     
-    // Final verification
     echo "<h3>Current State of First 5 Records</h3>";
     $finalSql = "SELECT item_id, item_name, brand_name, category, price_aud, stock_quantity FROM grocery_items ORDER BY item_id LIMIT 5";
     $finalStmt = $pdo->prepare($finalSql);
@@ -274,7 +243,6 @@ RETURNING item_id, item_name, price_aud AS new_price;";
     echo "</pre>";
     
 } catch (PDOException $e) {
-    // Handle any database errors
     echo "<div style='color: red;'>";
     echo "<h3>Database Error:</h3>";
     echo "<pre>";

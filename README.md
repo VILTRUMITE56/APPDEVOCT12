@@ -41,25 +41,36 @@ CREATE TABLE grocery_items (
 
 | File | Description |
 |------|-------------|
-| `schema.sql` | Database schema + 180 INSERT statements |
-| `dbconfig.php` | PDO connection with error handling |
+| `index.php` | Homepage with a nav bar linking every page |
+| `navbar.php` | Shared nav bar included at the top of all pages |
+| `schema.sql` | Database schema + INSERT statements |
+| `dbconfig.php` | PDO connection with error handling *(gitignored)* |
+| `dbconfig.example.php` | Template for `dbconfig.php` with placeholder values |
 | `fetch_all.php` | Demonstrates `fetchAll()` with `print_r()` and `<pre>` |
 | `fetch.php` | Demonstrates `fetch()` with `print_r()` and `<pre>` |
 | `insert.php` | INSERT with prepared statements (single, batch, transaction) |
 | `delete.php` | DELETE with prepared statements (single, multi, transaction) |
 | `update.php` | UPDATE with prepared statements (single, bulk, conditional) |
 | `display_table.php` | HTML table with filtering, sorting, pagination |
+| `display_table_raw.php` | The same data as a plain HTML table |
 
 ## Setup Instructions
 
-1. **Start XAMPP** - Ensure MySQL is running
-2. **Import Database**:
+1. **Start XAMPP** - Ensure Apache and MySQL are running
+
+2. **Import the database**:
    ```bash
    mysql -u root < schema.sql
    ```
    Or use phpMyAdmin to import `schema.sql`
-3. **Configure** - `dbconfig.php` uses XAMPP defaults (localhost, root, no password)
-4. **Access** - Place in `htdocs` and access via `http://localhost/Ybanez/`
+
+3. **Create `dbconfig.php` from the template** - it is gitignored so it is not in the repo:
+   ```bash
+   cp dbconfig.example.php dbconfig.php
+   ```
+   Then edit `dbconfig.php` and fill in your database user and password. For a default local XAMPP install these are `root` and an empty password.
+
+4. **Access** - Place the folder in `htdocs` and open `http://localhost/Ybanez/`
 
 ## PDO Methods Demonstrated
 
@@ -120,7 +131,7 @@ CREATE TABLE grocery_items (
 ✅ GitHub repository ready  
 
 ## GitHub Repository
-[Repository URL to be added after push]
+https://github.com/VILTRUMITE56/APPDEVOCT12
 
 ## Author
 Student - PDO Methods Activity

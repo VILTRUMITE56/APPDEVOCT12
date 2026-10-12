@@ -1,12 +1,8 @@
 -- Australian Grocery Items Database Schema
--- Country: Australia
--- Brands: Woolworths, Coles, Aldi Australia, Tim Tam, Vegemite, Arnott's, Cadbury Australia, Bundaberg, Milo, Four'n Twenty, etc.
 
--- Create database
 CREATE DATABASE IF NOT EXISTS grocery_db;
 USE grocery_db;
 
--- Create grocery_items table
 CREATE TABLE grocery_items (
     item_id INT AUTO_INCREMENT PRIMARY KEY,
     item_name VARCHAR(100) NOT NULL,
@@ -17,9 +13,8 @@ CREATE TABLE grocery_items (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert 100+ Australian grocery items with actual brand names
+-- Seed data: one row per item; category is a plain string, not a foreign key
 INSERT INTO grocery_items (item_name, brand_name, category, price_aud, stock_quantity) VALUES
--- Biscuits & Cookies
 ('Tim Tam Original', 'Arnott\'s', 'Biscuits', 3.50, 150),
 ('Tim Tam Double Coat', 'Arnott\'s', 'Biscuits', 3.80, 120),
 ('Tim Tam Dark', 'Arnott\'s', 'Biscuits', 3.80, 100),
@@ -40,8 +35,6 @@ INSERT INTO grocery_items (item_name, brand_name, category, price_aud, stock_qua
 ('Jatz', 'Arnott\'s', 'Biscuits', 2.60, 170),
 ('Premium Crackers', 'Arnott\'s', 'Biscuits', 2.90, 150),
 ('Cruskits', 'Arnott\'s', 'Biscuits', 3.00, 140),
-
--- Spreads & Condiments
 ('Vegemite 220g', 'Bega', 'Spreads', 5.50, 300),
 ('Vegemite 380g', 'Bega', 'Spreads', 8.90, 250),
 ('Vegemite 560g', 'Bega', 'Spreads', 12.50, 180),
@@ -54,8 +47,6 @@ INSERT INTO grocery_items (item_name, brand_name, category, price_aud, stock_qua
 ('Honey Jar', 'Capilano', 'Spreads', 7.20, 100),
 ('Nutella 375g', 'Ferrero Australia', 'Spreads', 5.80, 200),
 ('Nutella 750g', 'Ferrero Australia', 'Spreads', 10.50, 150),
-
--- Chocolate & Confectionery
 ('Dairy Milk Block 180g', 'Cadbury Australia', 'Chocolate', 4.00, 250),
 ('Dairy Milk Block 250g', 'Cadbury Australia', 'Chocolate', 5.20, 200),
 ('Caramilk Block', 'Cadbury Australia', 'Chocolate', 4.50, 180),
@@ -75,8 +66,6 @@ INSERT INTO grocery_items (item_name, brand_name, category, price_aud, stock_qua
 ('Smarties', 'Nestlé Australia', 'Chocolate', 2.50, 200),
 ('KitKat 4 Finger', 'Nestlé Australia', 'Chocolate', 1.80, 250),
 ('KitKat Chunky', 'Nestlé Australia', 'Chocolate', 2.00, 220),
-
--- Beverages
 ('Bundaberg Ginger Beer 375ml', 'Bundaberg', 'Beverages', 2.50, 200),
 ('Bundaberg Lemon Lime Bitters 375ml', 'Bundaberg', 'Beverages', 2.50, 180),
 ('Bundaberg Blood Orange 375ml', 'Bundaberg', 'Beverages', 2.50, 160),
@@ -95,8 +84,6 @@ INSERT INTO grocery_items (item_name, brand_name, category, price_aud, stock_qua
 ('Pump Water 750ml', 'Coca-Cola Amatil', 'Beverages', 2.50, 250),
 ('Cool Ridge Water 600ml', 'Schweppes Australia', 'Beverages', 2.00, 280),
 ('Neverfail Water 1.5L', 'Neverfail', 'Beverages', 2.20, 200),
-
--- Dairy & Eggs
 ('Full Cream Milk 2L', 'Pauls', 'Dairy', 3.80, 200),
 ('Full Cream Milk 3L', 'Pauls', 'Dairy', 5.20, 150),
 ('Lite Milk 2L', 'Pauls', 'Dairy', 3.80, 180),
@@ -117,8 +104,6 @@ INSERT INTO grocery_items (item_name, brand_name, category, price_aud, stock_qua
 ('Eggs 12 Pack', 'Sunny Queen', 'Dairy', 5.50, 250),
 ('Eggs 18 Pack', 'Sunny Queen', 'Dairy', 7.80, 200),
 ('Eggs 30 Pack', 'Sunny Queen', 'Dairy', 12.50, 150),
-
--- Frozen Foods
 ('Four\'n Twenty Pies 4 Pack', 'Four\'n Twenty', 'Frozen', 6.50, 180),
 ('Mrs Mac\'s Beef Pie', 'Mrs Mac\'s', 'Frozen', 2.80, 160),
 ('Mrs Mac\'s Sausage Roll', 'Mrs Mac\'s', 'Frozen', 3.50, 140),
@@ -132,8 +117,6 @@ INSERT INTO grocery_items (item_name, brand_name, category, price_aud, stock_qua
 ('Weight Watchers Meal', 'Heinz Australia', 'Frozen', 6.80, 100),
 ('Sara Lee Cheesecake', 'Sara Lee', 'Frozen', 8.50, 80),
 ('Sara Lee Apple Pie', 'Sara Lee', 'Frozen', 7.50, 90),
-
--- Pantry Staples
 ('Spaghetti 500g', 'San Remo', 'Pantry', 2.20, 250),
 ('Penne 500g', 'San Remo', 'Pantry', 2.20, 240),
 ('Fettuccine 500g', 'San Remo', 'Pantry', 2.50, 200),
@@ -184,8 +167,6 @@ INSERT INTO grocery_items (item_name, brand_name, category, price_aud, stock_qua
 ('Plain Flour 1kg', 'White Wings', 'Pantry', 2.00, 230),
 ('Bread Crumbs 300g', 'Tip Top', 'Pantry', 2.50, 150),
 ('Cornflakes Crumbs 300g', 'Kellogg\'s Australia', 'Pantry', 3.00, 140),
-
--- Snacks
 ('Twisties Cheese', 'Smith\'s', 'Snacks', 3.50, 200),
 ('Twisties Chicken', 'Smith\'s', 'Snacks', 3.50, 180),
 ('Rashuns', 'Smith\'s', 'Snacks', 3.20, 160),
@@ -215,7 +196,7 @@ INSERT INTO grocery_items (item_name, brand_name, category, price_aud, stock_qua
 ('Cruskits Original', 'Arnott\'s', 'Snacks', 3.00, 160),
 ('Cruskits Light', 'Arnott\'s', 'Snacks', 3.00, 150);
 
--- Create indexes for better query performance
+-- Indexes matching the most common filter and sort columns
 CREATE INDEX idx_category ON grocery_items(category);
 CREATE INDEX idx_brand ON grocery_items(brand_name);
 CREATE INDEX idx_price ON grocery_items(price_aud);
